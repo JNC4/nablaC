@@ -1,0 +1,19 @@
+{
+  "name": "nablac",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "nablaC: ∇C made visible. A neural network training in the browser with its machinery laid bare",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "node src/autograd.test.js"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

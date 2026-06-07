@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nablaC · ∇C made visible</title>
+  <meta name="description" content="A neural network training in your browser with its machinery laid bare. Watch ∇C, the gradient of the cost, flood backward and carve a decision boundary, from little neurons up to attention." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <header id="masthead">
+      <h1>nabla<span class="c">C</span> <span class="glyph">∇C</span></h1>
+      <p class="colophon">
+        the gradient of the cost, made visible · little neurons → intelligence ·
+        <span id="meta">[2·8·8·2] / η 0.30</span>
+      </p>
+      <div id="viewtoggle">
+        <button data-view="network" class="active">network</button>
+        <button data-view="landscape">landscape</button>
+        <button data-view="attention">attention</button>
+      </div>
+    </header>
+
+    <aside id="panel">
+      <section class="block">
+        <h2>Task</h2>
+        <label class="row"><span class="tag">data</span>
+          <select id="dataset"></select>
+        </label>
+        <label class="row"><span class="tag">shape</span>
+          <select id="arch"></select>
+        </label>
+        <label class="row"><span class="tag">φ</span>
+          <select id="activation">
+            <option value="tanh">tanh</option>
+            <option value="relu">relu</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="block">
+        <h2>Descent</h2>
+        <label class="param"><span>η &nbsp;learning rate <output id="lrOut">0.30</output></span>
+          <input id="lr" type="range" min="0.01" max="1.5" step="0.01" value="0.30" />
+        </label>
+        <label class="param"><span>speed <output id="speedOut">fast</output></span>
+          <input id="speed" type="range" min="0" max="200" step="10" value="120" />
+        </label>
+        <label class="param seed"><span>seed</span>
+          <input id="seed" type="text" placeholder="(1)" value="1" />
+          <button id="reseed" class="mini" title="new seed">↻</button>
+        </label>
+      </section>
+
+      <section class="block actions">
+        <button id="run" class="primary">TRAIN</button>
+        <div class="row">
+          <button id="stepBtn" class="mini">step</button>
+          <button id="reset" class="mini">reset</button>
+        </div>
+      </section>
+
+      <section class="block readouts">
+        <div class="ro"><span>step</span><b id="roStep">0</b></div>
+        <div class="ro"><span>C&nbsp;<i>cost</i></span><b id="roLoss">—</b></div>
+        <div class="ro"><span>acc</span><b id="roAcc">—</b></div>
+        <div class="ro"><span>‖∇C‖</span><b id="roGrad">—</b></div>
+      </section>
+
+      <p class="footnote">
+        warm edges excite, cool edges inhibit; thickness is |w|. the forward
+        sweep lights the neurons; the backward sweep is <span class="ax">∇C</span>,
+        the cost flooding back to tell every weight which way is downhill.
+      </p>
+    </aside>
+
+    <main id="stage-wrap">
+      <section id="view-network" class="view active">
+        <svg id="net" xmlns="http://www.w3.org/2000/svg"></svg>
+        <aside id="sidepanels">
+          <figure>
+            <figcaption>input space · P(B | x,y)</figcaption>
+            <canvas id="boundary"></canvas>
+          </figure>
+          <figure>
+            <figcaption>cost C <span class="legend"><i class="ink"></i>C <i class="cy"></i>‖∇C‖</span></figcaption>
+            <canvas id="loss"></canvas>
+          </figure>
+        </aside>
+      </section>
+
+      <section id="view-landscape" class="view">
+        <canvas id="landscape"></canvas>
+        <div id="landscape-eq"></div>
+      </section>
+
+      <section id="view-attention" class="view">
+        <div id="attention"></div>
+      </section>
+    </main>
+
+    <footer id="transcript">
+      <span id="status">idle · press TRAIN</span>
+      <span id="equation"></span>
+    </footer>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>∇C</title>
+    <meta name="description" content="A small neural network learning to sort dots into three groups, with its error drawn as a landscape and its learning as a walk downhill." />
+  </head>
+  <body>
+    <main id="sheet" class="sheet">
+      <header class="head">
+        <div class="head__title">
+          <h1>∇C</h1>
+          <p class="lede">A small neural network teaching itself to sort these dots by colour, one step downhill at a time.</p>
+        </div>
+        <div class="controls" role="group" aria-label="Step size">
+          <span class="controls__label">Step size</span>
+          <button type="button" data-eta="small" aria-pressed="false" title="η = 0.5">small</button>
+          <button type="button" data-eta="medium" aria-pressed="true" title="η = 3">medium</button>
+          <button type="button" data-eta="large" aria-pressed="false" title="η = 25">large</button>
+          <button type="button" id="again" class="again">Start again</button>
+        </div>
+      </header>
+
+      <section class="plate plate--belief">
+        <div id="belief-box" class="map"><canvas id="belief" aria-label="The plane, coloured by the group the network would guess at each spot, with the training dots on top."></canvas></div>
+        <p id="wrong" class="tally"></p>
+        <p class="caption"><em>What it thinks.</em> Each spot is coloured by the group the network would guess there. A ring marks a dot it still gets wrong.</p>
+      </section>
+
+      <section class="plate plate--terrain">
+        <div id="terrain-box" class="map"><canvas id="terrain" aria-label="A contour map of the network's error, with the path it has walked downhill drawn in red."></canvas></div>
+        <div id="profile-box" class="profile">
+          <canvas id="profile" aria-hidden="true"></canvas>
+          <p id="readout" class="tally tally--profile"></p>
+        </div>
+        <p class="caption"><em>How wrong it is.</em> Height is the cost C, its total error. The red track is the way it has walked, each step where ∇C says the ground falls fastest.</p>
+      </section>
+    </main>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

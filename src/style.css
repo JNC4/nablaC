@@ -30,11 +30,11 @@
   --paper: #f3eee3;
   --ink: #2a241e;
   --soft: #5a5047;
-  --faint: #8a7f72;
   --rule: #b9ad9c;
   --red: #c8302a;
   --gap: clamp(20px, 3vw, 44px);
-  --map: min(100%, calc(100vh - 310px), calc(100svh - 310px));
+  /* Each map is a square: half the width, or whatever height is left. */
+  --map: min(calc((100vw - 3 * var(--gap)) / 2), calc(100vh - 350px), calc(100svh - 350px), 620px);
 }
 
 * {
@@ -55,13 +55,13 @@ body {
 }
 
 .sheet {
-  max-width: 1300px;
+  width: fit-content;
   margin: 0 auto;
   padding: clamp(18px, 3.2vh, 36px) var(--gap) 28px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: var(--map) var(--map);
   grid-template-areas:
-    'head head'
+    'head controls'
     'belief terrain';
   column-gap: var(--gap);
   align-items: start;
@@ -70,17 +70,10 @@ body {
 .head {
   grid-area: head;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 14px 32px;
-  flex-wrap: wrap;
-  margin-bottom: clamp(16px, 2.6vh, 28px);
-}
-.head__title {
-  display: flex;
   align-items: baseline;
-  gap: 0.4em 1.1em;
-  flex-wrap: wrap;
+  gap: 0.3em 1em;
+  margin-bottom: clamp(16px, 2.6vh, 28px);
+  min-width: 0;
 }
 
 h1 {
@@ -89,6 +82,7 @@ h1 {
   line-height: 1;
   font-weight: 500;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .lede {
@@ -97,102 +91,18 @@ h1 {
   font-size: 19px;
   line-height: 1.35;
   color: var(--soft);
-  max-width: 50ch;
-}
-
-.plate {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-}
-.plate--belief {
-  grid-area: belief;
-  align-items: flex-end;
-}
-.plate--terrain {
-  grid-area: terrain;
-}
-
-.map {
-  width: var(--map);
-  aspect-ratio: 1;
-  position: relative;
-  outline: 1px solid var(--ink);
-  outline-offset: 0;
-  box-shadow: 0 0 0 4px var(--paper), 0 0 0 4.8px var(--rule);
-}
-.map canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.profile {
-  width: var(--map);
-  height: 62px;
-  margin-top: 16px;
-  position: relative;
-}
-.profile canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.tally {
-  margin: 10px 0 0;
-  font-size: 15px;
-  font-variant-numeric: tabular-nums lining-nums;
-  color: var(--ink);
-  min-height: 1.4em;
-}
-.tally--profile {
-  position: absolute;
-  right: 8px;
-  top: -4px;
-  margin: 0;
-  font-style: italic;
-}
-
-.caption {
-  width: var(--map);
-  margin: 12px 0 0;
-  font-size: 14.5px;
-  line-height: 1.45;
-  color: var(--soft);
-}
-.plate--belief .tally {
-  margin: 10px 0 0;
-  font-size: 15px;
-  font-variant-numeric: tabular-nums lining-nums;
-  color: var(--ink);
-  min-height: 1.4em;
-}
-.tally--profile {
-  position: absolute;
-  right: 8px;
-  top: -4px;
-  margin: 0;
-  font-style: italic;
-}
-
-.caption {
-  margin-top: 14px;
-}
-.caption em {
-  color: var(--ink);
-  font-weight: 600;
 }
 
 .controls {
+  grid-area: controls;
+  align-self: end;
+  justify-self: end;
+  margin-bottom: clamp(16px, 2.6vh, 28px);
   display: flex;
   align-items: baseline;
   gap: 6px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .controls__label {
   font-style: italic;
@@ -227,24 +137,91 @@ button:focus-visible {
   margin-left: 12px;
 }
 
+.plate {
+  min-width: 0;
+}
+.plate--belief {
+  grid-area: belief;
+}
+.plate--terrain {
+  grid-area: terrain;
+}
+
+.map {
+  width: 100%;
+  aspect-ratio: 1;
+  position: relative;
+  outline: 1px solid var(--ink);
+  box-shadow: 0 0 0 4px var(--paper), 0 0 0 4.8px var(--rule);
+}
+.map canvas,
+.profile canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.profile {
+  height: 86px;
+  margin-top: 16px;
+  position: relative;
+}
+
+.tally {
+  margin: 12px 0 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums lining-nums;
+  min-height: 1.4em;
+}
+.tally--profile {
+  position: absolute;
+  right: 8px;
+  top: -4px;
+  margin: 0;
+  font-style: italic;
+}
+
+.caption {
+  margin: 12px 0 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--soft);
+}
+.caption em {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 @media (max-width: 760px) {
   :root {
-    --map: 100%;
+    --gap: 18px;
+    --map: calc(100vw - 2 * var(--gap));
   }
   .sheet {
-    grid-template-columns: 1fr;
-    grid-template-areas: 'head' 'belief' 'terrain';
-    padding-top: 18px;
+    grid-template-columns: var(--map);
+    grid-template-areas: 'head' 'belief' 'terrain' 'controls';
+    padding-top: 16px;
   }
-  .plate--belief {
-    align-items: flex-start;
-    margin-bottom: 26px;
+  .head {
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
   }
   h1 {
-    font-size: 42px;
+    font-size: 40px;
   }
   .lede {
-    font-size: 17px;
+    font-size: 16.5px;
+  }
+  .plate--belief {
+    margin-bottom: 28px;
+  }
+  .controls {
+    justify-self: start;
+    justify-content: flex-start;
+    margin: 22px 0 0;
   }
   .again {
     margin-left: 0;

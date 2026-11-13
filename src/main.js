@@ -138,9 +138,14 @@ function onSurvey({ data: msg }) {
   if (r.grid.n < 72) survey(r, 72);
 }
 
-function routeEnd(r) {
-  const { win } = r.plane;
-  return [((0 - win.a0) / (win.a1 - win.a0)) * S, ((win.b1 - 0) / (win.b1 - win.b0)) * S];
+// The whole route in device pixels, every tenth step and the last.
+function routePx(r) {
+  const { path, win } = r.plane;
+  const out = [];
+  const push = (t) => out.push(((path[t * 2] - win.a0) / (win.a1 - win.a0)) * S, ((win.b1 - path[t * 2 + 1]) / (win.b1 - win.b0)) * S);
+  for (let t = 0; t < STEPS; t += 10) push(t);
+  push(STEPS);
+  return out;
 }
 
 function paint(r) {
@@ -149,7 +154,7 @@ function paint(r) {
   if (r.reliefKey === key) return;
   r.reliefKey = key;
   const first = !r.relief;
-  r.relief = paintRelief({ h: r.grid.h, n: r.grid.n, S, dpr, font: FONT, avoid: routeEnd(r) });
+  r.relief = paintRelief({ h: r.grid.h, n: r.grid.n, S, dpr, font: FONT, route: routePx(r) });
   if (first) r.reliefAt = r.known ? performance.now() : -1e9;
   dirty = true;
 }
@@ -232,17 +237,12 @@ function drawTerrain(s, now) {
   tctx.stroke();
 }
 
-window.__perf = [];
 function frame(now) {
-  const __t = performance.now();
-  try { frame0(now); } finally { window.__perf.push(performance.now() - __t); }
-}
-function frame0(now) {
   requestAnimationFrame(frame);
   if (!run || !run.known) return;
   if (!run.t0) run.t0 = now;
   const last = run.known - 1;
-  const s = reduce.matches ? last : Math.min(last, Math.floor(((now - run.t0) / 1000) * RATE));
+  const s = reduce.matches ? last : Math.max(0, Math.min(last, Math.floor(((now - run.t0) / 1000) * RATE)));
   // Several steps pass per frame; redrawing the network about 30 times a
   // second is plenty and halves the work.
   if (s !== run.shown && (now - run.drawnAt > 30 || s === STEPS || run.shown < 0)) {

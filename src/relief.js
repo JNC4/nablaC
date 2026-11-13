@@ -35,7 +35,7 @@ export const BANDS = [
 export const WATER_TINT = '#c2dbe6';
 const INDEX = new Set([0.5, 1, 1.5, 2, 2.5]);
 const TINTS = BANDS.map(([, c]) => hex(c));
-const SHADOW = hex('#4a4e72');
+const SHADOW = hex('#5a5068');
 const LIGHT = hex('#fffbea');
 const WATER_FILL = hex(WATER_TINT);
 const WATER_DEEP = hex('#a3c6d9');
@@ -108,9 +108,17 @@ function trace(ctx, polys, toPx) {
   }
 }
 
-// Paints the sheet into a canvas of S×S device pixels. `avoid` is a point
-// (device pixels) that labels should keep clear of: where the route ends.
-export function paintRelief({ h, n, S, dpr, font, avoid }) {
+// Paints the sheet into a canvas of S×S device pixels. `route` is the walk
+// in device pixels, flat [x0, y0, x1, y1, ...]; labels keep clear of it, and
+// well clear of where it ends.
+export function paintRelief({ h, n, S, dpr, font, route }) {
+  const endX = route[route.length - 2];
+  const endY = route[route.length - 1];
+  const clear = (x, y, dRoute, dEnd) => {
+    if (Math.hypot(endX - x, endY - y) < dEnd) return false;
+    for (let i = 0; i < route.length; i += 2) if (Math.hypot(route[i] - x, route[i + 1] - y) < dRoute) return false;
+    return true;
+  };
   const cv = document.createElement('canvas');
   cv.width = cv.height = S;
   const ctx = cv.getContext('2d');
@@ -155,7 +163,7 @@ export function paintRelief({ h, n, S, dpr, font, avoid }) {
         const shade = (-dx * lx - dy * ly + lz) / Math.sqrt(dx * dx + dy * dy + 1);
         const d = shade - lz;
         if (d < 0) {
-          const a = Math.min(0.5, -d * 0.9);
+          const a = Math.min(0.34, -d * 0.7);
           r += (SHADOW[0] - r) * a;
           g += (SHADOW[1] - g) * a;
           b += (SHADOW[2] - b) * a;
@@ -195,7 +203,6 @@ export function paintRelief({ h, n, S, dpr, font, avoid }) {
   const fs = Math.round(10.5 * dpr);
   ctx.font = `italic ${fs}px ${font}`;
   const labels = [];
-  const clear = (x, y, d) => !avoid || Math.hypot(avoid[0] - x, avoid[1] - y) > d;
   for (const { v, index, polys } of lines) {
     if (!index) continue;
     const text = v.toFixed(1);
@@ -203,12 +210,12 @@ export function paintRelief({ h, n, S, dpr, font, avoid }) {
     for (const poly of polys) {
       const pts = poly.pts;
       if (polyLength(pts) * (S / (G - 1)) < tw * 5) continue;
-      for (const frac of [0.5, 0.3, 0.7]) {
+      for (const frac of [0.5, 0.35, 0.65, 0.2, 0.8]) {
         const at = pointAt(pts, frac);
         const x = toPx(at.x);
         const y = toPx(at.y);
         if (x < tw || x > S - tw || y < fs * 2 || y > S - fs * 2) continue;
-        if (!clear(x, y, 40 * dpr)) continue;
+        if (!clear(x, y, tw * 0.9, 40 * dpr)) continue;
         if (labels.some((l) => Math.hypot(l.x - x, l.y - y) < tw * 4)) continue;
         let ang = at.angle;
         if (ang > Math.PI / 2) ang -= Math.PI;
@@ -256,8 +263,8 @@ export function paintRelief({ h, n, S, dpr, font, avoid }) {
     ctx.restore();
   }
 
-  // Shoreline, and the water's name at the middle of its largest stretch,
-  // nudged off the end of the route if they would collide.
+  // Shoreline, and the water's name near the middle of its largest stretch,
+  // nudged off the route if they would collide.
   if (lo < WATER) {
     ctx.strokeStyle = INK.shore;
     ctx.lineWidth = 1.1 * dpr;
@@ -279,14 +286,24 @@ export function paintRelief({ h, n, S, dpr, font, avoid }) {
       const text = `C below ${WATER}`;
       ctx.font = `italic ${fs}px ${font}`;
       const tw = ctx.measureText(text).width;
-      let wx = toPx(sx / count);
-      let wy = toPx(sy / count);
-      if (!clear(wx, wy, 34 * dpr)) wy = avoid[1] + (wy > avoid[1] ? 1 : -1) * 26 * dpr;
-      if (!clear(wx, wy, 34 * dpr)) wy = avoid[1] + 26 * dpr;
-      wx = Math.min(S - tw / 2 - 8 * dpr, Math.max(tw / 2 + 8 * dpr, wx));
-      wy = Math.min(S - 12 * dpr, Math.max(12 * dpr, wy));
+      const cx = toPx(sx / count);
+      const cy = toPx(sy / count);
+      const fit = (x, y) => [
+        Math.min(S - tw / 2 - 8 * dpr, Math.max(tw / 2 + 8 * dpr, x)),
+        Math.min(S - 12 * dpr, Math.max(12 * dpr, y)),
+      ];
+      let spot = fit(cx, cy);
+      // Offsets: a fraction of the label's width across, CSS pixels down.
+      for (const [fx, dy] of [[0, 0], [0, 24], [0, -24], [0, 44], [0, -44], [-0.6, 24], [0.6, 24], [-0.6, -24], [0.6, -24]]) {
+        const p = fit(cx + fx * tw, cy + dy * dpr);
+        if (F[Math.round((p[1] / S) * (G - 1)) * G + Math.round((p[0] / S) * (G - 1))] >= WATER) continue;
+        if (clear(p[0], p[1], tw * 0.65, 34 * dpr)) {
+          spot = p;
+          break;
+        }
+      }
       ctx.fillStyle = INK.water;
-      ctx.fillText(text, wx, wy);
+      ctx.fillText(text, spot[0], spot[1]);
     }
   }
 

@@ -20,7 +20,7 @@ export function makeProfile(canvas) {
   function draw(costs, upto, steps, font) {
     if (!W) return;
     ctx.clearRect(0, 0, W, H);
-    const padL = 30 * dpr;
+    const padL = 40 * dpr;
     const padR = 14 * dpr;
     const padT = 8 * dpr;
     const padB = 18 * dpr;
@@ -40,13 +40,14 @@ export function makeProfile(canvas) {
       ctx.moveTo(padL, Math.round(y(c)) + 0.5);
       ctx.lineTo(W - padR, Math.round(y(c)) + 0.5);
       ctx.stroke();
-      ctx.fillText(c === 0 ? '0' : c.toFixed(1), padL - 6 * dpr, y(c));
+      ctx.fillText(c === 0 ? '0' : c === 1 ? 'C 1.0' : c.toFixed(1), padL - 6 * dpr, y(c));
     }
-    ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     for (const t of [0, 500, 1000, 1500]) {
       if (t > steps) continue;
-      ctx.fillText(String(t), x(t), H - 3 * dpr);
+      const last = t === steps;
+      ctx.textAlign = last ? 'right' : 'center';
+      ctx.fillText(last ? `${t} steps` : String(t), last ? W - padR + 2 * dpr : x(t), H - 3 * dpr);
     }
 
     if (upto < 0) return;

@@ -17,6 +17,7 @@ const TOUR = 2600; // ms the network looks at each dot when left alone
 const PULSE = 1500; // ms for ∇C to run back through the network once
 const SURVEYORS = 3;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+const coarse = matchMedia('(pointer: coarse)');
 
 const net = makeNetwork();
 const P = net.nParams;
@@ -335,7 +336,7 @@ function frame(now) {
 
   if (now - mathsAt > 120) {
     mathsAt = now;
-    const html = renderMaths({ net, th, data, p, eta: run.eta, C: run.costs[s], target: netHover || netPin });
+    const html = renderMaths({ net, th, data, p, eta: run.eta, C: run.costs[s], target: netHover || netPin, touch: coarse.matches });
     if (html !== lastMaths) {
       mathsEl.innerHTML = html;
       lastMaths = html;

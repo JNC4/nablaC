@@ -292,18 +292,26 @@ export function paintRelief({ h, n, S, dpr, font, route }) {
         Math.min(S - tw / 2 - 8 * dpr, Math.max(tw / 2 + 8 * dpr, x)),
         Math.min(S - 12 * dpr, Math.max(12 * dpr, y)),
       ];
-      let spot = fit(cx, cy);
+      // Try spots around the middle of the water, then just off its shore,
+      // and leave it unnamed rather than print the name under the route.
       // Offsets: a fraction of the label's width across, CSS pixels down.
-      for (const [fx, dy] of [[0, 0], [0, 24], [0, -24], [0, 44], [0, -44], [-0.6, 24], [0.6, 24], [-0.6, -24], [0.6, -24]]) {
+      const tries = [];
+      for (const dy of [0, 24, -24, 44, -44, 64, -64]) for (const fx of [0, -0.6, 0.6, -1.1, 1.1]) tries.push([fx, dy, true]);
+      for (const dy of [80, -80, 100, -100]) for (const fx of [0, -0.8, 0.8]) tries.push([fx, dy, false]);
+      let spot = null;
+      for (const [fx, dy, wet] of tries) {
         const p = fit(cx + fx * tw, cy + dy * dpr);
-        if (F[Math.round((p[1] / S) * (G - 1)) * G + Math.round((p[0] / S) * (G - 1))] >= WATER) continue;
+        const inWater = F[Math.round((p[1] / S) * (G - 1)) * G + Math.round((p[0] / S) * (G - 1))] < WATER;
+        if (wet !== inWater) continue;
         if (clear(p[0], p[1], tw * 0.65, 34 * dpr)) {
           spot = p;
           break;
         }
       }
-      ctx.fillStyle = INK.water;
-      ctx.fillText(text, spot[0], spot[1]);
+      if (spot) {
+        ctx.fillStyle = INK.water;
+        ctx.fillText(text, spot[0], spot[1]);
+      }
     }
   }
 

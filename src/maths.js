@@ -18,7 +18,7 @@ export function renderMaths(ctx) {
   return weight(ctx);
 }
 
-function overview({ net, p, C, eta, data }) {
+function overview({ net, p, C, eta, data, touch }) {
   const nL = net.layers.length;
   const out = p.a[nL];
   const whole = `${v('a', '', 'O')} ${op('=')} ${sigma(`${v('W', '', 'O')} ${sigma(`${v('W', '', '2')} ${sigma(`${v('W', '', '1')}${v('a', '', '0')} ${op('+')} ${v('b', '', '1')}`)} ${op('+')} ${v('b', '', '2')}`)} ${op('+')} ${v('b', '', 'O')}`)}`;
@@ -33,7 +33,7 @@ function overview({ net, p, C, eta, data }) {
   if (!data.n) return rows.join('');
   rows.push(row(`${v('C')} ${op('=')} ${frac('1', v('n'))}${sum('')}${v('C', '0')} ${op('=')} ${num(C, 3)}<span class="aside">over all ${data.n} dots</span>`));
   rows.push(row(`${v('w')} ${op('←')} ${v('w')} ${op('−')} ${v('η')} ${d('C', v('w'))}<span class="aside">for every <i>w</i> and <i>b</i> at once, <i>η</i> = ${eta}</span>`, 'eq--tall'));
-  rows.push(row('<span class="aside aside--solo">Point at a neuron or a line for its own equation.</span>', 'eq--hint'));
+  rows.push(row(`<span class="aside aside--solo">${touch ? 'Tap' : 'Point at'} a neuron or a line for its own equation.</span>`, 'eq--hint'));
   return rows.join('');
 }
 
@@ -95,7 +95,8 @@ function weight({ net, th, data, p, eta, target }) {
   rows.push(row(`${op('=')} ${frac('1', v('n'))}${sum('')}${v('a', k, lp)}${sigmaPrime(v('z', j, ln))}${d(v('C', '0'), v('a', j, ln))} ${op('=')} ${num(g, 4)}`, 'eq--cont eq--tall'));
   if (p.label >= 0) {
     const t = chainTerm(p, l, j, k);
-    rows.push(row(`${d(v('C', '0'), wv)} ${op('=')} ${num(t.dz)} ${op('×')} ${num(t.sp)} ${op('×')} ${factor(t.dCda, 3)} ${op('=')} ${num(t.value, 4)}<span class="aside">this dot</span>`));
+    rows.push(row(`<span class="aside aside--solo">For the dot under the crosshair alone:</span>`, 'eq--note'));
+    rows.push(row(`${d(v('C', '0'), wv)} ${op('=')} ${num(t.dz)} ${op('×')} ${num(t.sp)} ${op('×')} ${factor(t.dCda, 3)} ${op('=')} ${num(t.value, 4)}`));
   }
   rows.push(row(`${wv} ${op('←')} ${num(w)} ${op('−')} ${eta} ${op('×')} ${factor(g, 4)} ${op('=')} ${num(w - eta * g, 3)}`));
   return rows.join('');

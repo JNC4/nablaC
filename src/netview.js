@@ -52,6 +52,29 @@ export function makeNetView(canvas, net) {
   // The edge from neuron k of layer l−1 to neuron j of layer l.
   const ends = (l, j, k) => [pos[l - 1][k], pos[l][j]];
 
+  // Lines are gathered into a few dozen batches of nearly equal colour and
+  // width, so a frame is a few dozen strokes rather than three hundred.
+  const batches = new Map();
+  function line(colour, alpha, width, [[x0, y0], [x1, y1]]) {
+    const a = Math.round(Math.min(1, alpha) * 24) / 24;
+    if (a <= 0) return;
+    const wq = Math.round(width * 4) / 4;
+    const key = `${colour.join(',')},${a}|${wq}`;
+    let path = batches.get(key);
+    if (!path) batches.set(key, (path = new Path2D()));
+    path.moveTo(x0, y0);
+    path.lineTo(x1, y1);
+  }
+  function flush() {
+    for (const [key, path] of batches) {
+      const [c, wq] = key.split('|');
+      ctx.strokeStyle = `rgba(${c})`;
+      ctx.lineWidth = +wq;
+      ctx.stroke(path);
+    }
+    batches.clear();
+  }
+
   // `s`: { th, p (probe), from (the probe before it moved, or null),
   //        probeAge (ms since it moved), grad, gscale,
   //        pulse (0..1 front position, or null), hover }
@@ -92,16 +115,11 @@ export function makeNetView(canvas, net) {
             alpha *= 0.18 + 0.82 * carry;
             alpha = Math.min(1, alpha + travel * carry * 0.8);
           }
-          const [[x0, y0], [x1, y1]] = ends(l, j, k);
-          ctx.strokeStyle = rgba(w >= 0 ? POS : NEG, alpha);
-          ctx.lineWidth = (0.3 + 1.9 * m + travel * carry * 1.6) * dpr;
-          ctx.beginPath();
-          ctx.moveTo(x0, y0);
-          ctx.lineTo(x1, y1);
-          ctx.stroke();
+          line(w >= 0 ? POS : NEG, alpha, (0.3 + 1.9 * m + travel * carry * 1.6) * dpr, ends(l, j, k));
         }
       }
     }
+    flush();
 
     // ∇C, running backwards.
     if (pulse !== null && grad && gscale > 0) {
@@ -120,16 +138,11 @@ export function makeNetView(canvas, net) {
             const strength = Math.min(1, g / gscale) ** 0.4;
             const a = glow * strength;
             if (a < 0.03) continue;
-            const [[x0, y0], [x1, y1]] = ends(l, j, k);
-            ctx.strokeStyle = rgba(RED, 0.75 * a);
-            ctx.lineWidth = (0.6 + 2.4 * strength) * dpr;
-            ctx.beginPath();
-            ctx.moveTo(x0, y0);
-            ctx.lineTo(x1, y1);
-            ctx.stroke();
+            line(RED, 0.75 * a, (0.6 + 2.4 * strength) * dpr, ends(l, j, k));
           }
         }
       }
+      flush();
     }
 
     // The line being pointed at.

@@ -239,7 +239,7 @@ button.quiet[aria-pressed='true'] {
   margin-top: 12px;
   height: 250px;
   overflow: hidden;
-  font-size: clamp(12.5px, 4cqi, 15.5px);
+  font-size: clamp(12px, 3.75cqi, 15.5px);
   line-height: 1.2;
   font-variant-numeric: lining-nums tabular-nums;
   border-top: 1px solid var(--rule);
@@ -257,6 +257,9 @@ button.quiet[aria-pressed='true'] {
 }
 .eq--tall {
   margin-bottom: 0.4em;
+}
+.eq--note {
+  margin: 0.2em 0 0.1em;
 }
 .v {
   font-style: italic;
@@ -373,7 +376,7 @@ button.quiet[aria-pressed='true'] {
 
 /* Medium screens: the two maps side by side, the network and its
    equations as a band underneath. */
-@media (max-width: 1179px) {
+@media (max-width: 899px) {
   :root {
     --map: min(calc((100vw - 2 * var(--pad) - var(--gap)) / 2), calc(100vh - 300px), 560px);
   }

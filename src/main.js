@@ -84,7 +84,7 @@ function restart() {
 
 function show(r) {
   run = r;
-  run.t0 = run.known ? performance.now() : 0;
+  run.t0 = 0;
   run.shown = -1;
   if (run.relief) run.reliefAt = -1e9;
   paint(run);
@@ -98,7 +98,6 @@ function onTrainer({ data: msg }) {
     r.thetas.set(msg.thetas, msg.from * P);
     r.costs.set(msg.costs, msg.from);
     r.known = msg.from + msg.costs.length;
-    if (r === run && !r.t0) r.t0 = performance.now();
   } else if (msg.type === 'plane') {
     if (r.plane?.provisional && sameWeights(msg.end, opening.end)) {
       r.plane.provisional = false;
@@ -240,9 +239,10 @@ function drawTerrain(s, now) {
 function frame(now) {
   requestAnimationFrame(frame);
   if (!run || !run.known) return;
-  if (!run.t0) run.t0 = now;
+  // The walk starts once there is ground to draw it on.
+  if (!run.t0 && run.relief) run.t0 = now;
   const last = run.known - 1;
-  const s = reduce.matches ? last : Math.max(0, Math.min(last, Math.floor(((now - run.t0) / 1000) * RATE)));
+  const s = reduce.matches ? last : run.t0 ? Math.max(0, Math.min(last, Math.floor(((now - run.t0) / 1000) * RATE))) : 0;
   // Several steps pass per frame; redrawing the network about 30 times a
   // second is plenty and halves the work.
   if (s !== run.shown && (now - run.drawnAt > 30 || s === STEPS || run.shown < 0)) {

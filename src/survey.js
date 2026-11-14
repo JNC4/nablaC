@@ -1,16 +1,17 @@
 // Surveying the cost after the walk.
 //
 // C is a function of every weight at once (hundreds of numbers), so it has
-// no map. What can be drawn is a flat slice through it. Following Li et al.,
-// "Visualizing the Loss Landscape of Neural Nets" (NeurIPS 2018), the slice is
-// the plane that best fits the path descent actually took: take the steps
-// θ_t − θ_end, find their two principal directions d₁, d₂, and evaluate
+// no map. What can be drawn is a flat slice through it, chosen after the
+// fact to hold the path descent actually took (in the spirit of Li et al.,
+// "Visualizing the Loss Landscape of Neural Nets", NeurIPS 2018, who use the
+// principal directions of the path): two unit directions d₁, d₂ through the
+// final weights θ_end, and
 //
 //   C(θ_end + α d₁ + β d₂)
 //
 // on a grid of (α, β). Each grid cell is a real, complete network; its
-// height is that network's real cost on the training set. The walker never
-// sees this map. It only ever knew the slope under its feet.
+// height is that network's real cost on the training set. The network never
+// sees this map. It only ever knew the slope where it stood.
 
 import { cost, initParams } from './net.js';
 
@@ -141,18 +142,6 @@ export function principalPlane(steps, count = 2) {
     return d;
   });
   return { dirs, explained: eig.map((e) => e.lambda / trace) };
-}
-
-// Coordinates of θ in the plane.
-export function project(theta, end, dirs) {
-  let a = 0;
-  let b = 0;
-  for (let p = 0; p < theta.length; p++) {
-    const v = theta[p] - end[p];
-    a += v * dirs[0][p];
-    b += v * dirs[1][p];
-  }
-  return [a, b];
 }
 
 // A square window around the projected path, equal scale on both axes so

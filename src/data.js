@@ -37,27 +37,8 @@ function arms(perClass, r, turn, noise) {
   return pts;
 }
 
-// Three clusters, one of them split in two across the others, so a straight
-// cut cannot separate them and the hidden layers have to bend the boundary.
-function islands(perClass, r) {
-  const centres = [
-    [[-0.55, 0.45], [0.55, -0.5]],
-    [[0.5, 0.5]],
-    [[-0.5, -0.45], [0.05, 0.02]],
-  ];
-  const pts = [];
-  centres.forEach((cs, c) => {
-    for (let i = 0; i < perClass; i++) {
-      const [cx, cy] = cs[i % cs.length];
-      pts.push([cx + gauss(r) * 0.17, cy + gauss(r) * 0.17, c]);
-    }
-  });
-  return pts;
-}
-
 export const TASKS = {
   arms: (seed) => pack(arms(50, rng(seed), 0.62, 0.05)),
-  islands: (seed) => pack(islands(50, rng(seed))),
 };
 
 export function makeData(task, seed = 11) {

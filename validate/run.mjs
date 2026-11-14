@@ -27,7 +27,7 @@ function check(ok, msg) {
 }
 const fmt = (x) => x.toExponential(2);
 
-// 1 ─ the reference autograd against finite differences
+// 1. the reference autograd against finite differences
 console.log('\n1. scalar autograd against finite differences');
 console.log('   f(a,b,c) = tanh(ab + c²)·σ(a − b) + eᶜ/(b + 2) − log(a² + 1)');
 {
@@ -72,7 +72,7 @@ function valueCost(net, th, data) {
   return { C: C.data, grad: params.map((p) => p.grad) };
 }
 
-// 2 and 3 ─ the piece's backprop
+// 2 and 3. the piece's backprop
 const { net, data } = setup();
 const P = net.nParams;
 console.log(`\n2. the piece's backpropagation against the scalar autograd (${P} weights and biases)`);
@@ -116,7 +116,7 @@ console.log('\n3. the piece\'s ∇C against finite differences of C (40 componen
   check(worst < 1e-8, `largest disagreement ${fmt(worst)}`);
 }
 
-// 4 ─ learning
+// 4. learning
 console.log(`\n4. gradient descent learns the task (η = ${ETAS.medium}, ${STEPS} steps, ten random starts)`);
 {
   let worstEnd = 0;
@@ -132,7 +132,7 @@ console.log(`\n4. gradient descent learns the task (η = ${ETAS.medium}, ${STEPS
   check(worstAcc >= 0.98, `every start ends with at least 98% of dots right (worst ${(worstAcc * 100).toFixed(1)}%)`);
 }
 
-// 5 ─ the map
+// 5. the map
 console.log('\n5. the map is the real cost where the route starts and ends');
 const opening = JSON.parse(readFileSync(new URL('../src/opening.json', import.meta.url)));
 {
@@ -150,7 +150,7 @@ const opening = JSON.parse(readFileSync(new URL('../src/opening.json', import.me
   check(Math.abs(mEnd - cEnd) < 1e-6, `end: map ${mEnd.toFixed(6)}, network ${cEnd.toFixed(6)}`);
   check(inPlane > 0.95, `${(inPlane * 100).toFixed(1)}% of the route's squared length lies in the drawn plane`);
 
-  // 6 ─ the shipped opening sheet
+  // 6. the shipped opening sheet
   console.log('\n6. src/opening.json matches the current code');
   let worst = 0;
   for (let p = 0; p < P; p++) worst = Math.max(worst, Math.abs(end[p] - opening.end[p]));

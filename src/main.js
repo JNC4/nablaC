@@ -64,6 +64,7 @@ let stroke = null;
 let lastMaths = '';
 let mathsAt = 0;
 const grad = new Float64Array(P);
+let gradMax = 0; // the largest |∂C/∂w| at the step on screen
 
 // Section: runs.
 
@@ -295,7 +296,7 @@ function frame(now) {
       costAndGrad(net, run.thetas.subarray(0, P), run.data, grad);
       let gmax = 0;
       for (const L of net.layers) for (let i = 0; i < L.nin * L.nout; i++) gmax = Math.max(gmax, Math.abs(grad[L.w + i]));
-      run.gscale = gmax * 0.6;
+      run.gscale = gmax;
     }
     run.shown = s;
     run.drawnAt = now;
@@ -329,7 +330,9 @@ function frame(now) {
     from: pFrom,
     probeAge: still ? 1e9 : now - probeAt.since,
     grad,
-    gscale: run.gscale,
+    gscale: gradMax * 0.6,
+    // The pulse dims as ∇C shrinks, gently, so it stays visible to the end.
+    fade: run.gscale > 0 ? Math.max(0.25, Math.min(1, gradMax / run.gscale) ** 0.3) : 0,
     pulse,
     hover: netHover || netPin,
   });
@@ -370,6 +373,8 @@ function dataChanged(th) {
   const wrong = territory.render(net, th, data);
   if (!run.empty) costAndGrad(net, th, data, grad);
   else grad.fill(0);
+  gradMax = 0;
+  for (const L of net.layers) for (let i = 0; i < L.nin * L.nout; i++) gradMax = Math.max(gradMax, Math.abs(grad[L.w + i]));
   p = null;
   tally.textContent = !data.n
     ? 'No dots. Pick a colour and draw some.'

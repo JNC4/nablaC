@@ -76,12 +76,13 @@ export function makeNetView(canvas, net) {
   }
 
   // `s`: { th, p (probe), from (the probe before it moved, or null),
-  //        probeAge (ms since it moved), grad, gscale,
+  //        probeAge (ms since it moved), grad, gscale (|∂C/∂w| drawn at full
+  //        strength), fade (0..1, how bright the pulse is overall),
   //        pulse (0..1 front position, or null), hover }
   function draw(s) {
     if (!W) return;
     ctx.clearRect(0, 0, W, H);
-    const { th, p, from, grad, gscale, pulse, hover } = s;
+    const { th, p, from, grad, gscale, fade, pulse, hover } = s;
     const reveal = (l) => (p ? smooth((s.probeAge - 110 * l) / 220) : 0);
     // Each layer changes over from the old point's values to the new one's
     // as the signal reaches it.
@@ -135,8 +136,8 @@ export function makeNetView(canvas, net) {
         for (let j = 0; j < L.nout; j++) {
           for (let k = 0; k < L.nin; k++) {
             const g = Math.abs(grad[L.w + j * L.nin + k]);
-            const strength = Math.min(1, g / gscale) ** 0.4;
-            const a = glow * strength;
+            const strength = Math.min(1, g / gscale) ** 0.5;
+            const a = glow * strength * fade;
             if (a < 0.03) continue;
             line(RED, 0.75 * a, (0.6 + 2.4 * strength) * dpr, ends(l, j, k));
           }

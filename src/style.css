@@ -17,13 +17,13 @@
   font-family: 'Text';
   src: url('./fonts/libertinus-nabla.woff2') format('woff2');
   font-style: normal;
-  unicode-range: U+2207;
+  unicode-range: U+2207, U+2208, U+22C5;
 }
 @font-face {
   font-family: 'Text';
   src: url('./fonts/libertinus-nabla-italic.woff2') format('woff2');
   font-style: italic;
-  unicode-range: U+2207;
+  unicode-range: U+2207, U+2208, U+22C5;
 }
 
 :root {
@@ -32,9 +32,11 @@
   --soft: #5a5047;
   --rule: #b9ad9c;
   --red: #c8302a;
-  --gap: clamp(20px, 3vw, 44px);
-  /* Each map is a square: half the width, or whatever height is left. */
-  --map: min(calc((100vw - 3 * var(--gap)) / 2), calc(100vh - 350px), calc(100svh - 350px), 620px);
+  --pad: clamp(18px, 2.4vw, 34px);
+  --gap: clamp(20px, 2vw, 30px);
+  /* Wide screens: map, network, map, the network a little narrower. */
+  --map: min(calc((100vw - 2 * var(--pad) - 2 * var(--gap)) / 2.78), calc(100vh - 380px), calc(100svh - 380px), 600px);
+  --netw: calc(var(--map) * 0.78);
 }
 
 * {
@@ -57,12 +59,12 @@ body {
 .sheet {
   width: fit-content;
   margin: 0 auto;
-  padding: clamp(18px, 3.2vh, 36px) var(--gap) 28px;
+  padding: clamp(16px, 2.8vh, 32px) var(--pad) 28px;
   display: grid;
-  grid-template-columns: var(--map) var(--map);
+  grid-template-columns: var(--map) var(--netw) var(--map);
   grid-template-areas:
-    'head controls'
-    'belief terrain';
+    'head head controls'
+    'belief network terrain';
   column-gap: var(--gap);
   align-items: start;
 }
@@ -71,14 +73,14 @@ body {
   grid-area: head;
   display: flex;
   align-items: baseline;
-  gap: 0.3em 1em;
-  margin-bottom: clamp(16px, 2.6vh, 28px);
+  gap: 0.75em;
+  margin-bottom: clamp(14px, 2.4vh, 26px);
   min-width: 0;
 }
 
 h1 {
   margin: 0;
-  font-size: 54px;
+  font-size: 50px;
   line-height: 1;
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -88,28 +90,30 @@ h1 {
 .lede {
   margin: 0;
   font-style: italic;
-  font-size: 19px;
-  line-height: 1.35;
+  font-size: 20px;
+  line-height: 1.3;
   color: var(--soft);
+}
+
+.label {
+  font-style: italic;
+  color: var(--soft);
+  margin-right: 4px;
+  font-size: 15px;
 }
 
 .controls {
   grid-area: controls;
   align-self: end;
   justify-self: end;
-  margin-bottom: clamp(16px, 2.6vh, 28px);
+  margin-bottom: clamp(14px, 2.4vh, 26px);
   display: flex;
   align-items: baseline;
   gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
-.controls__label {
-  font-style: italic;
-  color: var(--soft);
-  margin-right: 4px;
-  font-size: 15px;
-}
+
 button {
   font: inherit;
   font-size: 15px;
@@ -134,7 +138,7 @@ button:focus-visible {
   outline-offset: 2px;
 }
 .again {
-  margin-left: 12px;
+  margin-left: 10px;
 }
 
 .plate {
@@ -142,6 +146,9 @@ button:focus-visible {
 }
 .plate--belief {
   grid-area: belief;
+}
+.plate--network {
+  grid-area: network;
 }
 .plate--terrain {
   grid-area: terrain;
@@ -155,12 +162,182 @@ button:focus-visible {
   box-shadow: 0 0 0 4px var(--paper), 0 0 0 4.8px var(--rule);
 }
 .map canvas,
+.net canvas,
 .profile canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   display: block;
+}
+#belief {
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+#belief.is-drawing {
+  touch-action: none;
+  cursor: cell;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 14px;
+}
+.tools .label {
+  font-size: 14.5px;
+}
+.swatch {
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+.swatch span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 1.5px var(--paper);
+}
+.swatch[aria-pressed='true'] span {
+  box-shadow: 0 0 0 1.5px var(--ink), 0 0 0 3px var(--paper);
+}
+button.quiet {
+  font-size: 14.5px;
+  border-color: transparent;
+  padding: 3px 7px 4px;
+}
+button.quiet:hover {
+  border-color: var(--rule);
+}
+button.quiet[aria-pressed='true'] {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.tools__presets {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.net {
+  width: 100%;
+  aspect-ratio: 0.78;
+  position: relative;
+}
+#net {
+  touch-action: manipulation;
+}
+
+.maths {
+  container-type: inline-size;
+  margin-top: 12px;
+  height: 250px;
+  overflow: hidden;
+  font-size: clamp(12.5px, 4cqi, 15.5px);
+  line-height: 1.2;
+  font-variant-numeric: lining-nums tabular-nums;
+  border-top: 1px solid var(--rule);
+  padding-top: 12px;
+}
+.eq {
+  margin: 0 0 0.62em;
+  white-space: nowrap;
+}
+.eq--lead {
+  margin-bottom: 0.8em;
+}
+.eq--cont {
+  padding-left: 1.6em;
+}
+.eq--tall {
+  margin-bottom: 0.4em;
+}
+.v {
+  font-style: italic;
+}
+.n {
+  font-style: normal;
+}
+.op {
+  margin: 0 0.12em;
+}
+.ss {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: 0.64em;
+  font-size: 0.66em;
+  line-height: 1.02;
+  margin-left: 0.04em;
+  margin-right: 0.08em;
+}
+.ss__sup {
+  min-height: 1em;
+}
+.ss__sub {
+  font-style: italic;
+  min-height: 1em;
+}
+.frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: 0.62em;
+  margin: 0 0.12em;
+  line-height: 1.1;
+}
+.frac__n {
+  border-bottom: 1px solid currentColor;
+  padding: 0 0.15em 0.05em;
+}
+.frac__d {
+  padding: 0.08em 0.15em 0;
+}
+.frac .ss {
+  font-size: 0.62em;
+}
+.sum {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: -0.08em;
+  line-height: 0.95;
+  margin: 0 0.1em 0 0.05em;
+}
+.sum__s {
+  font-size: 1.3em;
+}
+.sum__i {
+  font-size: 0.62em;
+  font-style: italic;
+  min-height: 0.9em;
+}
+.aside {
+  margin-left: 0.9em;
+  font-style: italic;
+  color: var(--soft);
+  font-size: 0.86em;
+}
+.aside--solo {
+  margin-left: 0;
+  white-space: normal;
+}
+.maths sup {
+  font-size: 0.66em;
+}
+.g0 {
+  color: #a35f17;
+}
+.g1 {
+  color: #2a654d;
+}
+.g2 {
+  color: #63407e;
 }
 
 .profile {
@@ -170,7 +347,7 @@ button:focus-visible {
 }
 
 .tally {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   font-size: 15px;
   font-variant-numeric: tabular-nums lining-nums;
   min-height: 1.4em;
@@ -184,7 +361,7 @@ button:focus-visible {
 }
 
 .caption {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   font-size: 14.5px;
   line-height: 1.45;
   color: var(--soft);
@@ -194,29 +371,68 @@ button:focus-visible {
   font-weight: 600;
 }
 
+/* Medium screens: the two maps side by side, the network and its
+   equations as a band underneath. */
+@media (max-width: 1179px) {
+  :root {
+    --map: min(calc((100vw - 2 * var(--pad) - var(--gap)) / 2), calc(100vh - 300px), 560px);
+  }
+  .sheet {
+    grid-template-columns: var(--map) var(--map);
+    grid-template-areas:
+      'head controls'
+      'belief terrain'
+      'network network';
+  }
+  .plate--network {
+    display: grid;
+    grid-template-columns: var(--map) var(--map);
+    column-gap: var(--gap);
+    margin-top: 28px;
+    align-items: start;
+  }
+  .net {
+    aspect-ratio: 1.2;
+  }
+  .maths {
+    margin-top: 0;
+    height: auto;
+    min-height: 220px;
+  }
+}
+
 @media (max-width: 760px) {
   :root {
-    --gap: 18px;
-    --map: calc(100vw - 2 * var(--gap));
+    --pad: 16px;
+    --map: calc(100vw - 2 * var(--pad));
   }
   .sheet {
     grid-template-columns: var(--map);
-    grid-template-areas: 'head' 'belief' 'terrain' 'controls';
-    padding-top: 16px;
+    grid-template-areas: 'head' 'belief' 'network' 'terrain' 'controls';
+    padding-top: 14px;
   }
   .head {
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
   }
   h1 {
-    font-size: 40px;
+    font-size: 36px;
   }
   .lede {
-    font-size: 16.5px;
+    font-size: 16px;
   }
-  .plate--belief {
-    margin-bottom: 28px;
+  .plate--network {
+    display: block;
+    margin: 26px 0 28px;
+  }
+  .net {
+    aspect-ratio: 1.12;
+  }
+  .maths {
+    margin-top: 10px;
+    height: 236px;
+    min-height: 0;
   }
   .controls {
     justify-self: start;
@@ -224,6 +440,9 @@ button:focus-visible {
     margin: 22px 0 0;
   }
   .again {
+    margin-left: 0;
+  }
+  .tools__presets {
     margin-left: 0;
   }
 }

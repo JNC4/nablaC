@@ -13,16 +13,16 @@
 // height is that network's real cost on the training set. The network never
 // sees this map. It only ever knew the slope where it stood.
 
-import { cost, initParams } from './net.js';
+import { cost } from './net.js';
 
 const SNAP_EVERY = 3;
 
 // Everything the map needs from a finished run: the plane, the route drawn
 // in it, the share of the route that lies in the plane, and the window.
-// `all` holds θ_t for every step as rows; `end` is θ_steps in full precision.
-export function planeOfRun({ net, seed, all, end, steps }) {
+// `all` holds θ_t for every step as rows; `start` and `end` are θ_0 and
+// θ_steps in full precision.
+export function planeOfRun({ net, start, all, end, steps }) {
   const P = net.nParams;
-  const start = initParams(net, seed);
   const row = (t, p) => (t === 0 ? start[p] : all[t * P + p]);
   const offsets = [];
   for (let t = 0; t <= steps; t += SNAP_EVERY) {

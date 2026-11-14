@@ -4,17 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>∇C</title>
-    <meta name="description" content="A small neural network learning to sort dots by colour, with its error drawn as ground and its learning as a walk downhill." />
+    <meta name="description" content="A small neural network learning to sort dots by colour, drawn with its weights, its equations and its error as a map it walks down." />
   </head>
   <body>
     <main id="sheet" class="sheet">
       <header class="head">
         <h1>∇C</h1>
-        <p class="lede">A small neural network learning to sort these dots by colour. Each step it takes heads downhill on its own error.</p>
+        <p class="lede">A small neural network learning to sort these dots by colour.</p>
       </header>
 
       <div class="controls" role="group" aria-label="Step size">
-        <span class="controls__label">Step size</span>
+        <span class="label">Step size</span>
         <button type="button" data-eta="small" aria-pressed="false" title="η = 0.5">small</button>
         <button type="button" data-eta="medium" aria-pressed="true" title="η = 3">medium</button>
         <button type="button" data-eta="large" aria-pressed="false" title="η = 25">large</button>
@@ -23,8 +23,26 @@
 
       <section class="plate plate--belief">
         <div id="belief-box" class="map"><canvas id="belief" role="img" aria-label="The plane, coloured by the group the network would guess at each spot, with the training dots on top."></canvas></div>
+        <div class="tools" role="toolbar" aria-label="Draw dots">
+          <span class="label">Draw</span>
+          <button type="button" class="swatch" data-tool="0" aria-pressed="false" aria-label="Draw ochre dots"><span style="--c: #b06a1f"></span></button>
+          <button type="button" class="swatch" data-tool="1" aria-pressed="false" aria-label="Draw green dots"><span style="--c: #2f6f55"></span></button>
+          <button type="button" class="swatch" data-tool="2" aria-pressed="false" aria-label="Draw violet dots"><span style="--c: #6b4687"></span></button>
+          <button type="button" class="quiet" data-tool="erase" aria-pressed="false">rub out</button>
+          <span class="tools__presets">
+            <button type="button" class="quiet" data-preset="spiral" aria-pressed="true">spiral</button>
+            <button type="button" class="quiet" data-preset="rings" aria-pressed="false">rings</button>
+            <button type="button" class="quiet" data-preset="islands" aria-pressed="false">islands</button>
+            <button type="button" class="quiet" id="clear">clear</button>
+          </span>
+        </div>
         <p id="wrong" class="tally"></p>
-        <p class="caption"><em>What it thinks.</em> Each spot is coloured by the group the network would guess there. A ring marks a dot it still gets wrong.</p>
+        <p class="caption"><em>What it thinks.</em> Each spot is coloured by the group the network would guess there. A ring marks a dot it gets wrong.</p>
+      </section>
+
+      <section class="plate plate--network">
+        <div id="net-box" class="net"><canvas id="net" role="img" aria-label="The network: two inputs, two layers of sixteen neurons, three outputs, with every weight drawn as a line."></canvas></div>
+        <div id="maths" class="maths" aria-live="off"></div>
       </section>
 
       <section class="plate plate--terrain">
@@ -33,7 +51,7 @@
           <canvas id="profile" aria-hidden="true"></canvas>
           <p id="readout" class="tally tally--profile"></p>
         </div>
-        <p class="caption"><em>How wrong it is.</em> Every point on this ground is one setting of the network’s 371 weights, and its height is the error C that setting makes. The red dot is the network on the left. Each step, it moves the way ∇C says is steepest downhill.</p>
+        <p class="caption"><em>How wrong it is.</em> Every point on this ground is one setting of the network’s 371 weights, and its height is the error C that setting makes. The red dot is the network in the middle. Each step, it moves the way ∇C says is steepest downhill.</p>
       </section>
     </main>
     <script type="module" src="./src/main.js"></script>

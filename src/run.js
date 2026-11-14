@@ -1,30 +1,25 @@
-// One training run: random weights, then `steps` steps of full-batch
-// gradient descent, θ ← θ − η ∇C. Shared by the browser worker and the
-// offline checks so both run exactly the same thing.
+// One training run: a starting θ, then `steps` steps of full-batch gradient
+// descent, θ ← θ − η ∇C. Shared by the browser worker and the offline checks
+// so both run exactly the same thing.
 
-import { makeNet, initParams, costAndGrad } from './net.js';
-import { makeData } from './data.js';
+import { makeNet, costAndGrad } from './net.js';
 
-export const HIDDEN = 16;
+export const SIZES = [2, 16, 16, 3];
 export const STEPS = 1500;
-export const TASK = 'arms';
 
 // The three step sizes on offer. All three are real outcomes of the same
 // network on the same data; only η changes.
 export const ETAS = { small: 0.5, medium: 3, large: 25 };
 
-export function setup(task = TASK) {
-  const net = makeNet([2, HIDDEN, HIDDEN, 3]);
-  const data = makeData(task);
-  return { net, data };
-}
+export const makeNetwork = () => makeNet(SIZES);
 
-// Runs the descent, calling onChunk(from, thetas, costs) every `chunk` steps
-// with the parameters θ_t (as rows of a Float32Array) and C(θ_t) for those
-// steps. Returns the final parameters in full precision.
-export function train({ net, data, eta, seed, steps = STEPS, chunk = 100, onChunk }) {
+// Runs the descent from `start` (copied, not changed), calling
+// onChunk(from, thetas, costs) every `chunk` steps with θ_t as rows of a
+// Float32Array and C(θ_t) for those steps. Returns the final θ in full
+// precision.
+export function train({ net, data, eta, start, steps = STEPS, chunk = 100, onChunk }) {
   const P = net.nParams;
-  const th = initParams(net, seed);
+  const th = Float64Array.from(start);
   const g = new Float64Array(P);
   let from = 0;
   let thetas = new Float32Array(chunk * P);

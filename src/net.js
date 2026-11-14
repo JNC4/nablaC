@@ -93,7 +93,7 @@ export function cost(net, th, data) {
       total += e * e;
     }
   }
-  return total / data.n;
+  return data.n ? total / data.n : 0;
 }
 
 // C(θ) and ∇C(θ), the full-batch gradient written into `grad`.
@@ -135,13 +135,86 @@ export function costAndGrad(net, th, data, grad) {
       }
     }
   }
-  const inv = 1 / data.n;
+  const inv = data.n ? 1 / data.n : 0;
   for (let p = 0; p < grad.length; p++) grad[p] *= inv;
   return total * inv;
 }
 
+// One input followed all the way through and, if it has a label, all the way
+// back: every z and a, and for a labelled dot the derivative of its own cost
+// C₀ = Σ_j (a_j − y_j)² with respect to every activation, ∂C₀/∂a. Layer 0 is
+// the input. Used for the drawing of the network and for its equations.
+export function probe(net, th, x, y, label = -1) {
+  const nL = net.layers.length;
+  const a = [Float64Array.of(x, y)];
+  const z = [null];
+  for (let l = 0; l < nL; l++) {
+    const L = net.layers[l];
+    const zl = new Float64Array(L.nout);
+    const al = new Float64Array(L.nout);
+    for (let j = 0; j < L.nout; j++) {
+      let s = th[L.b + j];
+      for (let k = 0; k < L.nin; k++) s += th[L.w + j * L.nin + k] * a[l][k];
+      zl[j] = s;
+      al[j] = sigmoid(s);
+    }
+    z.push(zl);
+    a.push(al);
+  }
+  const out = { a, z, label, C0: null, dCda: null };
+  if (label < 0) return out;
+  // ∂C₀/∂a(O) = 2 (a − y), then back one layer at a time:
+  // ∂C₀/∂a_k(l−1) = Σ_j w_jk(l) σ′(z_j(l)) ∂C₀/∂a_j(l).
+  const dCda = a.map((al) => new Float64Array(al.length));
+  let C0 = 0;
+  for (let j = 0; j < a[nL].length; j++) {
+    const e = a[nL][j] - (j === label ? 1 : 0);
+    C0 += e * e;
+    dCda[nL][j] = 2 * e;
+  }
+  for (let l = nL; l >= 1; l--) {
+    const L = net.layers[l - 1];
+    for (let k = 0; k < L.nin; k++) {
+      let s = 0;
+      for (let j = 0; j < L.nout; j++) {
+        const sp = a[l][j] * (1 - a[l][j]);
+        s += th[L.w + j * L.nin + k] * sp * dCda[l][j];
+      }
+      dCda[l - 1][k] = s;
+    }
+  }
+  out.C0 = C0;
+  out.dCda = dCda;
+  return out;
+}
+
+// One dot's share of ∂C/∂w for the weight from neuron k of layer l−1 to
+// neuron j of layer l (k = −1 means the bias b_j), as the essay's chain:
+//   ∂z_j/∂w · ∂a_j/∂z_j · ∂C₀/∂a_j = a_k(l−1) · σ′(z_j(l)) · ∂C₀/∂a_j(l).
+export function chainTerm(p, l, j, k) {
+  const sp = p.a[l][j] * (1 - p.a[l][j]);
+  const dz = k < 0 ? 1 : p.a[l - 1][k];
+  return { dz, sp, dCda: p.dCda[l][j], value: dz * sp * p.dCda[l][j] };
+}
+
+// ∂C/∂w as the average of that chain over every training dot. A separate
+// route to the number costAndGrad finds; validate/run.mjs checks they agree.
+export function chainGrad(net, th, data, l, j, k) {
+  if (!data.n) return 0;
+  let s = 0;
+  for (let i = 0; i < data.n; i++) s += chainTerm(probe(net, th, data.xs[i], data.ys[i], data.labels[i]), l, j, k).value;
+  return s / data.n;
+}
+
+// Where weight (l, j, k) lives in θ; k = −1 is the bias.
+export function paramIndex(net, l, j, k) {
+  const L = net.layers[l - 1];
+  return k < 0 ? L.b + j : L.w + j * L.nin + k;
+}
+
 // Fraction of examples whose brightest output neuron is the right one.
 export function accuracy(net, th, data) {
+  if (!data.n) return 1;
   let ok = 0;
   for (let i = 0; i < data.n; i++) {
     const out = forward(net, th, data.xs[i], data.ys[i]);
